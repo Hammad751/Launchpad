@@ -1,22 +1,27 @@
-import "@/app/globals.css"
-import type { ReactNode } from "react"
-import { ThemeProvider } from "@/components/theme-provider"
+import type React from "react"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import ClientLayout from "./ClientLayout"
+import "./globals.css"
 
-/**
- * Root layout shared by the entire app.
- */
-export default function RootLayout({ children }: { children: ReactNode }) {
+const inter = Inter({ subsets: ["latin"] })
+
+export const metadata: Metadata = {
+  title: "Token Factory - Create Custom ERC-20 Tokens",
+  description: "Deploy custom ERC-20 tokens on DXB Chain in minutes. No coding required.",
+    generator: 'v0.dev'
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen antialiased">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
+    <html lang="en">
+      <body className={inter.className}>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   )
 }
-
-export const metadata = {
-      generator: 'v0.dev'
-    };
