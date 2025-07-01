@@ -2,52 +2,47 @@
 
 import type React from "react"
 import { useState } from "react"
+import { useAccount } from "wagmi"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { useTokenFactory } from "@/hooks/use-token-factory"
+import type { TokenDeploymentData } from "@/types/token"
 import {
   Loader2,
-  Coins,
-  AlertCircle,
   Rocket,
+  AlertCircle,
+  CheckCircle2,
+  ExternalLink,
+  Coins,
   DollarSign,
   FileText,
   Hash,
   TrendingUp,
-  Sparkles,
-  CheckCircle2,
   Info,
+  Sparkles,
 } from "lucide-react"
-import { useWallet } from "@/lib/web3-utils"
-import { useToast } from "@/hooks/use-toast"
-
-interface TokenFormData {
-  name: string
-  symbol: string
-  totalSupply: string
-  decimals: string
-  description: string
-}
 
 export function TokenFactoryForm() {
-  const { isConnected, address, chainId } = useWallet()
-  const { toast } = useToast()
-  const [formData, setFormData] = useState<TokenFormData>({
+  const { address, isConnected } = useAccount()
+  const { deployToken, isLoading, error, txHash, deployedTokenAddress } = useTokenFactory()
+
+  const [formData, setFormData] = useState<TokenDeploymentData>({
     name: "",
     symbol: "",
     totalSupply: "",
-    decimals: "18",
     description: "",
+    paymentAmount: "0.01", // Reset to 0.01
   })
 
-  const [errors, setErrors] = useState<Partial<TokenFormData>>({})
-  const [isDeploying, setIsDeploying] = useState(false)
+  const [errors, setErrors] = useState<Partial<TokenDeploymentData>>({})
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<TokenFormData> = {}
+    const newErrors: Partial<TokenDeploymentData> = {}
 
     if (!formData.name.trim()) {
       newErrors.name = "Token name is required"
@@ -65,11 +60,14 @@ export function TokenFactoryForm() {
       newErrors.totalSupply = "Total supply is required"
     } else if (isNaN(Number(formData.totalSupply)) || Number(formData.totalSupply) <= 0) {
       newErrors.totalSupply = "Total supply must be a positive number"
+    } else if (Number(formData.totalSupply) > 1000000000000) {
+      newErrors.totalSupply = "Total supply cannot exceed 1 trillion"
     }
 
-    const decimals = Number(formData.decimals)
-    if (isNaN(decimals) || decimals < 0 || decimals > 18) {
-      newErrors.decimals = "Decimals must be between 0 and 18"
+    if (!formData.paymentAmount.trim()) {
+      newErrors.paymentAmount = "Payment amount is required"
+    } else if (isNaN(Number(formData.paymentAmount)) || Number(formData.paymentAmount) < 0.01) {
+      newErrors.paymentAmount = "Minimum payment amount is 0.01 VRCN"
     }
 
     setErrors(newErrors)
@@ -78,39 +76,16 @@ export function TokenFactoryForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isConnected || !validateForm() || chainId !== 1999) return
+    if (!validateForm()) return
 
-    setIsDeploying(true)
     try {
-      // This is a demo - in reality you'd call your smart contract
-      // For now, we'll simulate the deployment
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-
-      toast({
-        title: "Token Deployed Successfully! 🎉",
-        description: `${formData.name} (${formData.symbol}) has been deployed to DXB Chain`,
-      })
-
-      // Reset form
-      setFormData({
-        name: "",
-        symbol: "",
-        totalSupply: "",
-        decimals: "18",
-        description: "",
-      })
-    } catch (error: any) {
-      toast({
-        title: "Deployment Failed",
-        description: error.message || "Failed to deploy token",
-        variant: "destructive",
-      })
-    } finally {
-      setIsDeploying(false)
+      await deployToken(formData)
+    } catch (err) {
+      console.error("Deployment failed:", err)
     }
   }
 
-  const handleInputChange = (field: keyof TokenFormData, value: string) => {
+  const handleInputChange = (field: keyof TokenDeploymentData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
@@ -119,23 +94,28 @@ export function TokenFactoryForm() {
 
   if (!isConnected) {
     return (
-      <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-400/30">
-        <CardContent className="p-8 text-center">
-          <AlertCircle className="w-16 h-16 text-orange-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">Wallet Required</h3>
-          <p className="text-gray-300">Please connect your wallet to deploy tokens.</p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (chainId !== 1999) {
-    return (
-      <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-400/30">
-        <CardContent className="p-8 text-center">
-          <AlertCircle className="w-16 h-16 text-orange-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">Wrong Network</h3>
-          <p className="text-gray-300">Please switch to DXB Chain to deploy tokens.</p>
+      <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+        <CardHeader className="text-center pb-8">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-4">
+            <Coins className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Connect Your Wallet
+          </CardTitle>
+          <CardDescription className="text-lg text-gray-600">
+            Connect your wallet to start creating your custom token
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center pb-8">
+          <Alert className="border-purple-200 bg-purple-50">
+            <Info className="h-5 w-5 text-purple-600" />
+            <AlertDescription className="text-purple-800 text-left">
+              <strong>Why connect a wallet?</strong>
+              <br />• Deploy your token to the blockchain
+              <br />• Pay deployment fees securely
+              <br />• Manage your created tokens
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     )
@@ -143,87 +123,84 @@ export function TokenFactoryForm() {
 
   return (
     <div className="space-y-8">
-      {/* Connected wallet info */}
-      <Card className="bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-400/30">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              <span className="text-emerald-200 font-medium">
-                Connected to {address?.slice(0, 6)}...{address?.slice(-4)}
-              </span>
+      {/* Token Creation Form */}
+      <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+        <CardHeader className="pb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+              <Rocket className="h-6 w-6 text-white" />
             </div>
-            <Badge className="bg-emerald-500/20 text-emerald-200 border-emerald-400/30">Ready to Deploy</Badge>
+            <div>
+              <CardTitle className="text-2xl font-bold">Create Your Token</CardTitle>
+              <CardDescription className="text-base">
+                Fill in the details below to deploy your custom ERC-20 token
+              </CardDescription>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-sm px-3 py-1">
+              Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+            </Badge>
+          </div>
+        </CardHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Token Information Section */}
-        <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <Coins className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-white text-xl">Token Information</CardTitle>
-                <CardDescription className="text-gray-300">Define your token's basic properties</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label htmlFor="name" className="text-white font-medium flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Token Name *
-                </Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., My Awesome Token"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  className={`h-12 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-purple-400 transition-colors ${
-                    errors.name ? "border-red-400 focus:border-red-400" : ""
-                  }`}
-                />
-                {errors.name && (
-                  <p className="text-red-400 text-sm flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors.name}
-                  </p>
-                )}
-                <p className="text-xs text-gray-400">The full name of your token (e.g., "Bitcoin")</p>
+        <CardContent className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Token Basic Info */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Coins className="h-5 w-5 text-purple-600" />
+                <h3 className="text-lg font-semibold">Token Information</h3>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="symbol" className="text-white font-medium flex items-center gap-2">
-                  <Hash className="w-4 h-4" />
-                  Token Symbol *
-                </Label>
-                <Input
-                  id="symbol"
-                  placeholder="e.g., MAT"
-                  value={formData.symbol}
-                  onChange={(e) => handleInputChange("symbol", e.target.value.toUpperCase())}
-                  className={`h-12 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-purple-400 transition-colors ${
-                    errors.symbol ? "border-red-400 focus:border-red-400" : ""
-                  }`}
-                  maxLength={10}
-                />
-                {errors.symbol && (
-                  <p className="text-red-400 text-sm flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors.symbol}
-                  </p>
-                )}
-                <p className="text-xs text-gray-400">Short identifier for your token (e.g., "BTC")</p>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Token Name *
+                  </Label>
+                  <Input
+                    id="name"
+                    placeholder="e.g., My Awesome Token"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    className={`h-12 ${errors.name ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
+                  />
+                  {errors.name && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.name}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">The full name of your token (e.g., "Bitcoin")</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="symbol" className="text-sm font-medium flex items-center gap-2">
+                    <Hash className="h-4 w-4" />
+                    Token Symbol *
+                  </Label>
+                  <Input
+                    id="symbol"
+                    placeholder="e.g., MAT"
+                    value={formData.symbol}
+                    onChange={(e) => handleInputChange("symbol", e.target.value.toUpperCase())}
+                    className={`h-12 ${errors.symbol ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
+                    maxLength={10}
+                  />
+                  {errors.symbol && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.symbol}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">Short identifier for your token (e.g., "BTC")</p>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="totalSupply" className="text-white font-medium flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
+              <div className="space-y-2">
+                <Label htmlFor="totalSupply" className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
                   Total Supply *
                 </Label>
                 <Input
@@ -232,166 +209,199 @@ export function TokenFactoryForm() {
                   placeholder="e.g., 1000000"
                   value={formData.totalSupply}
                   onChange={(e) => handleInputChange("totalSupply", e.target.value)}
-                  className={`h-12 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-purple-400 transition-colors ${
-                    errors.totalSupply ? "border-red-400 focus:border-red-400" : ""
-                  }`}
+                  className={`h-12 ${errors.totalSupply ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
                 />
                 {errors.totalSupply && (
-                  <p className="text-red-400 text-sm flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
                     {errors.totalSupply}
                   </p>
                 )}
-                <p className="text-xs text-gray-400">Total number of tokens to be created</p>
+                <p className="text-xs text-gray-500">
+                  Total number of tokens that will be created and sent to your wallet
+                </p>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="decimals" className="text-white font-medium flex items-center gap-2">
-                  <Hash className="w-4 h-4" />
-                  Decimals
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Description (Optional)
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe your token's purpose, utility, and vision..."
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  rows={4}
+                  className="resize-none focus:border-purple-500"
+                />
+                <p className="text-xs text-gray-500">Help others understand what your token is for</p>
+              </div>
+            </div>
+
+            {/* Payment Section */}
+            <div className="border-t pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                <h3 className="text-lg font-semibold">Deployment Cost</h3>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="paymentAmount" className="text-sm font-medium">
+                  Deployment Fee (VRCN) *
                 </Label>
                 <Input
-                  id="decimals"
+                  id="paymentAmount"
                   type="number"
-                  min="0"
-                  max="18"
-                  value={formData.decimals}
-                  onChange={(e) => handleInputChange("decimals", e.target.value)}
-                  className={`h-12 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-purple-400 transition-colors ${
-                    errors.decimals ? "border-red-400 focus:border-red-400" : ""
-                  }`}
+                  step="0.01"
+                  min="0.01"
+                  placeholder="0.01"
+                  value={formData.paymentAmount}
+                  onChange={(e) => handleInputChange("paymentAmount", e.target.value)}
+                  className={`h-12 ${errors.paymentAmount ? "border-red-500 focus:border-red-500" : "focus:border-green-500"}`}
                 />
-                {errors.decimals && (
-                  <p className="text-red-400 text-sm flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors.decimals}
+                {errors.paymentAmount && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.paymentAmount}
                   </p>
                 )}
-                <p className="text-xs text-gray-400">Number of decimal places (18 is standard)</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label htmlFor="description" className="text-white font-medium flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Description (Optional)
-              </Label>
-              <Textarea
-                id="description"
-                placeholder="Describe your token's purpose, utility, and vision..."
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                className="min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-purple-400 transition-colors resize-none"
-                rows={4}
-              />
-              <p className="text-xs text-gray-400">Help others understand what your token is for</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Deployment Cost Section */}
-        <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-400/30">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-white text-xl">Deployment Cost</CardTitle>
-                <CardDescription className="text-green-200">One-time fee to deploy your token</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-white/10 rounded-xl p-6 border border-white/20">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-semibold text-white">Total Cost:</span>
-                <span className="text-2xl font-bold text-green-400">0.01 VRCN</span>
-              </div>
-              <div className="space-y-2 text-sm text-gray-300">
-                <div className="flex justify-between">
-                  <span>• Smart contract deployment</span>
-                  <span>Included</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>• Token creation & minting</span>
-                  <span>Included</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>• Gas fees</span>
-                  <span>Included</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>• Instant token transfer</span>
-                  <span>Included</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Token Preview */}
-        {(formData.name || formData.symbol || formData.totalSupply) && (
-          <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-400/30">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-400" />
-                Token Preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-white/10 rounded-lg border border-white/20">
-                  <p className="text-sm text-gray-400 mb-1">Name</p>
-                  <p className="font-bold text-lg text-white">{formData.name || "Token Name"}</p>
-                </div>
-                <div className="text-center p-4 bg-white/10 rounded-lg border border-white/20">
-                  <p className="text-sm text-gray-400 mb-1">Symbol</p>
-                  <p className="font-bold text-lg text-white">{formData.symbol || "SYMBOL"}</p>
-                </div>
-                <div className="text-center p-4 bg-white/10 rounded-lg border border-white/20">
-                  <p className="text-sm text-gray-400 mb-1">Total Supply</p>
-                  <p className="font-bold text-lg text-white">
-                    {formData.totalSupply ? Number(formData.totalSupply).toLocaleString() : "0"}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-sm text-green-800">
+                    <strong>Minimum Required: 0.01 VRCN</strong>
+                    <br />• Smart contract deployment
+                    <br />• Token creation and minting
+                    <br />• Gas fees covered
+                    <br />• Instant token transfer to your wallet
                   </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
 
-        {/* Deploy Button */}
-        <Card className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-400/30">
-          <CardContent className="p-6">
+            {/* Status Messages */}
+            {error && (
+              <Alert variant="destructive" className="border-red-200">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {txHash && (
+              <Alert className="border-blue-200 bg-blue-50">
+                <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <div className="space-y-2">
+                    <p className="font-medium">Transaction submitted successfully! 🚀</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">TX Hash:</span>
+                      <code className="text-xs bg-blue-100 px-2 py-1 rounded font-mono">
+                        {txHash.slice(0, 10)}...{txHash.slice(-8)}
+                      </code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          const url = `https://dxb.vrcchain.com/tx/${txHash}`
+                          window.open(url, "_blank", "noopener,noreferrer")
+                        }}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {deployedTokenAddress && (
+              <Alert className="border-green-200 bg-green-50">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  <div className="space-y-3">
+                    <p className="font-bold text-lg">🎉 Token deployed successfully!</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Contract Address:</span>
+                        <code className="text-xs bg-green-100 px-2 py-1 rounded font-mono">
+                          {deployedTokenAddress.slice(0, 10)}...{deployedTokenAddress.slice(-8)}
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            const url = `https://dxb.vrcchain.com/address/${deployedTokenAddress}`
+                            window.open(url, "_blank", "noopener,noreferrer")
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <p className="text-sm">
+                        Your {formData.name} ({formData.symbol}) tokens have been sent to your wallet!
+                      </p>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Submit Button */}
             <Button
               type="submit"
-              disabled={isDeploying || !formData.name || !formData.symbol || !formData.totalSupply}
-              className="w-full h-16 text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-xl hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg"
+              disabled={isLoading}
             >
-              {isDeploying ? (
+              {isLoading ? (
                 <>
-                  <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
                   Deploying Your Token...
                 </>
               ) : (
                 <>
-                  <Rocket className="mr-3 h-6 w-6" />
-                  Deploy Token (0.01 VRCN)
+                  <Rocket className="mr-3 h-5 w-5" />
+                  Deploy Token ({formData.paymentAmount} VRCN)
                 </>
               )}
             </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-            {!isDeploying && (
-              <div className="mt-4 text-center">
-                <p className="text-sm text-gray-400 flex items-center justify-center gap-2">
-                  <Info className="w-4 h-4" />
-                  Your tokens will be sent to your wallet immediately after deployment
+      {/* Token Preview */}
+      {(formData.name || formData.symbol || formData.totalSupply) && (
+        <Card className="border-0 shadow-xl bg-gradient-to-r from-purple-50 to-pink-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              Token Preview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                <p className="text-sm text-gray-500">Name</p>
+                <p className="font-semibold text-lg">{formData.name || "Token Name"}</p>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                <p className="text-sm text-gray-500">Symbol</p>
+                <p className="font-semibold text-lg">{formData.symbol || "SYMBOL"}</p>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                <p className="text-sm text-gray-500">Total Supply</p>
+                <p className="font-semibold text-lg">
+                  {formData.totalSupply ? Number(formData.totalSupply).toLocaleString() : "0"}
                 </p>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
-      </form>
+      )}
     </div>
   )
 }
