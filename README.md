@@ -1,10 +1,5 @@
 # Smart contract frontend
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/hammadvtech-6333s-projects/v0-smart-contract-frontend)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/eHpoDbdurpE)
-
 ## Overview
 
 This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
@@ -14,13 +9,7 @@ Any changes you make to your deployed app will be automatically pushed to this r
 
 Your project is live at:
 
-**[https://vercel.com/hammadvtech-6333s-projects/v0-smart-contract-frontend](https://vercel.com/hammadvtech-6333s-projects/v0-smart-contract-frontend)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/eHpoDbdurpE](https://v0.dev/chat/projects/eHpoDbdurpE)**
+**https://lunchpad.vrccoin.io/**
 
 ## Configuration
 
