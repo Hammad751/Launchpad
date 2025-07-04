@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { useState, useEffect } from "react"
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { TOKEN_FACTORY_ABI } from "@/lib/contract-abi"
-import { TOKEN_FACTORY_ADDRESS } from "@/lib/contract-address"
+import { getContractAddressByChainId, isSupportedChainId, isMainnetChain } from "@/lib/network-config"
 import type { DeployedToken } from "@/types/token"
 
 // ERC20 ABI for getting token details
@@ -39,6 +39,10 @@ export function useTokenHistory() {
   const [error, setError] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<any>({})
 
+  // Get contract address for current chain
+  const contractAddress = chain?.id ? getContractAddressByChainId(chain.id) : null
+  const isChainSupported = chain?.id ? isSupportedChainId(chain.id) : false
+
   // Debug logging with null checks
   useEffect(() => {
     const debugData = {
@@ -46,14 +50,15 @@ export function useTokenHistory() {
       isConnected: Boolean(isConnected),
       chain: chain?.name || null,
       chainId: chain?.id || null,
-      contractAddress: TOKEN_FACTORY_ADDRESS || null,
+      contractAddress: contractAddress || null,
+      isChainSupported: Boolean(isChainSupported),
       abiHasGetAllUserTokens:
         TOKEN_FACTORY_ABI?.some?.((item) => item?.type === "function" && item?.name === "getAllUserTokens") || false,
     }
 
-    console.log("🔍 Debug Info:", debugData)
+    console.log("🔍 Token History Debug Info:", debugData)
     setDebugInfo(debugData)
-  }, [address, isConnected, chain])
+  }, [address, isConnected, chain, contractAddress, isChainSupported])
 
   // Get all user tokens from the contract with enhanced error handling
   const {
@@ -63,16 +68,23 @@ export function useTokenHistory() {
     refetch: refetchAddresses,
     status: addressesStatus,
   } = useReadContract({
-    address: TOKEN_FACTORY_ADDRESS as `0x${string}`,
+    address: contractAddress as `0x${string}`,
     abi: TOKEN_FACTORY_ABI,
     functionName: "getAllUserTokens",
     args: address ? [address as `0x${string}`] : undefined,
     query: {
-      enabled: Boolean(address && isConnected && chain?.id === 1999),
+      enabled: Boolean(
+        address &&
+          isConnected &&
+          chain?.id &&
+          isChainSupported &&
+          contractAddress &&
+          contractAddress !== "0x0000000000000000000000000000000000000000",
+      ),
       retry: 2,
       retryDelay: 2000,
-      staleTime: 30000, // Cache for 30 seconds
-      gcTime: 60000, // Garbage collect after 1 minute
+      staleTime: 30000,
+      gcTime: 60000,
     },
   })
 
@@ -87,8 +99,16 @@ export function useTokenHistory() {
       arrayLength: Array.isArray(userTokenAddresses) ? userTokenAddresses.length : 0,
       error: addressesError || null,
       errorMessage: addressesError?.message || null,
-      enabled: Boolean(address && isConnected && chain?.id === 1999),
+      enabled: Boolean(
+        address &&
+          isConnected &&
+          chain?.id &&
+          isChainSupported &&
+          contractAddress &&
+          contractAddress !== "0x0000000000000000000000000000000000000000",
+      ),
       chainId: chain?.id || null,
+      contractAddress: contractAddress || null,
     }
 
     console.log("📊 Contract Call Status:", logData)
@@ -102,7 +122,17 @@ export function useTokenHistory() {
         }
       })
     }
-  }, [addressesStatus, isLoadingAddresses, userTokenAddresses, addressesError, address, isConnected, chain])
+  }, [
+    addressesStatus,
+    isLoadingAddresses,
+    userTokenAddresses,
+    addressesError,
+    address,
+    isConnected,
+    chain,
+    contractAddress,
+    isChainSupported,
+  ])
 
   // Prepare contracts for batch reading token details with enhanced validation
   const tokenContracts = useMemo(() => {
@@ -268,6 +298,25 @@ export function useTokenHistory() {
   // Handle errors with comprehensive null checking
   useEffect(() => {
     try {
+      if (!isChainSupported && chain?.id) {
+        setError(`Unsupported network. Please switch to a supported network.`)
+        return
+      }
+
+      if (!contractAddress && isChainSupported) {
+        setError("Contract not available on this network")
+        return
+      }
+
+      if (contractAddress === "0x0000000000000000000000000000000000000000") {
+        if (chain?.id && isMainnetChain(chain.id)) {
+          setError("Mainnet contract is not yet deployed. Please use testnet for now.")
+        } else {
+          setError("Contract address not configured for this network")
+        }
+        return
+      }
+
       if (addressesError) {
         console.error("❌ Contract Error Details:", {
           error: addressesError,
@@ -306,7 +355,7 @@ export function useTokenHistory() {
       console.error("❌ Error in error handling:", errorHandlingError)
       setError("An unexpected error occurred")
     }
-  }, [addressesError, tokenDetailsError])
+  }, [addressesError, tokenDetailsError, isChainSupported, contractAddress, chain?.id])
 
   // Listen for new token deployments with error handling
   useEffect(() => {
@@ -346,6 +395,8 @@ export function useTokenHistory() {
       addressesStatus: addressesStatus || "unknown",
       isArray: Array.isArray(userTokenAddresses),
       arrayLength: Array.isArray(userTokenAddresses) ? userTokenAddresses.length : 0,
+      contractAddress: contractAddress || null,
+      isChainSupported: Boolean(isChainSupported),
     },
   }
 }

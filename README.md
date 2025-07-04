@@ -22,6 +22,30 @@ Continue building your app on:
 
 **[https://v0.dev/chat/projects/eHpoDbdurpE](https://v0.dev/chat/projects/eHpoDbdurpE)**
 
+## Configuration
+
+### Network Setup
+
+The application is configured via the `.env` file. To switch between testnet and mainnet:
+
+1. Open `.env` file
+2. Change `NEXT_PUBLIC_NETWORK=testnet` to `NEXT_PUBLIC_NETWORK=mainnet` (or vice versa)
+3. Restart your development server
+
+### Current Networks
+
+**Testnet (Default):**
+- Chain ID: 1999
+- Name: DXB Chain Testnet
+- RPC: https://rpc-testnet-1.vrcchain.com
+- Explorer: https://dxb.vrcchain.com
+
+**Mainnet:**
+- Chain ID: 7131
+- Name: VRCN Chain
+- RPC: https://rpc-mainnet-4.vrcchain.com
+- Explorer: https://vrcchain.com
+
 ## How It Works
 
 1. Create and modify your project using [v0.dev](https://v0.dev)

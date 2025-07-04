@@ -25,10 +25,19 @@ import {
   TrendingUp,
   Info,
   Sparkles,
+  Construction,
 } from "lucide-react"
+import {
+  getExplorerUrl,
+  getCurrentNetworkConfig,
+  isTestnet,
+  isMainnetChain,
+  isMainnetContractReadyByChainId,
+} from "@/lib/network-config"
 
 export function TokenFactoryForm() {
   const { address, isConnected } = useAccount()
+  const { chain } = useAccount()
   const { deployToken, isLoading, error, txHash, deployedTokenAddress } = useTokenFactory()
 
   const [formData, setFormData] = useState<TokenDeploymentData>({
@@ -36,7 +45,7 @@ export function TokenFactoryForm() {
     symbol: "",
     totalSupply: "",
     description: "",
-    paymentAmount: "0.01", // Reset to 0.01
+    paymentAmount: "0.01",
   })
 
   const [errors, setErrors] = useState<Partial<TokenDeploymentData>>({})
@@ -94,22 +103,22 @@ export function TokenFactoryForm() {
 
   if (!isConnected) {
     return (
-      <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
-        <CardHeader className="text-center pb-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-4">
-            <Coins className="w-8 h-8 text-white" />
+      <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm mx-4 sm:mx-0">
+        <CardHeader className="text-center pb-6 sm:pb-8 px-4 sm:px-6">
+          <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+            <Coins className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Connect Your Wallet
           </CardTitle>
-          <CardDescription className="text-lg text-gray-600">
+          <CardDescription className="text-base sm:text-lg text-gray-600">
             Connect your wallet to start creating your custom token
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-center pb-8">
+        <CardContent className="text-center pb-6 sm:pb-8 px-4 sm:px-6">
           <Alert className="border-purple-200 bg-purple-50">
-            <Info className="h-5 w-5 text-purple-600" />
-            <AlertDescription className="text-purple-800 text-left">
+            <Info className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+            <AlertDescription className="text-purple-800 text-left text-sm sm:text-base">
               <strong>Why connect a wallet?</strong>
               <br />• Deploy your token to the blockchain
               <br />• Pay deployment fees securely
@@ -122,41 +131,52 @@ export function TokenFactoryForm() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 px-4 sm:px-0">
+      {/* Mainnet Warning */}
+      {chain?.id && isMainnetChain(chain.id) && !isMainnetContractReadyByChainId(chain.id) && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <Construction className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
+          <AlertDescription className="text-orange-800 text-sm sm:text-base">
+            <strong>Development Mode:</strong> Mainnet contract address is not yet configured. This is for development
+            and testing purposes only. The contract address will be updated when the mainnet deployment is ready.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Token Creation Form */}
       <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
-        <CardHeader className="pb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
-              <Rocket className="h-6 w-6 text-white" />
+        <CardHeader className="pb-4 sm:pb-6 px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg w-fit">
+              <Rocket className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <div>
-              <CardTitle className="text-2xl font-bold">Create Your Token</CardTitle>
-              <CardDescription className="text-base">
+            <div className="flex-1">
+              <CardTitle className="text-xl sm:text-2xl font-bold">Create Your Token</CardTitle>
+              <CardDescription className="text-sm sm:text-base mt-1">
                 Fill in the details below to deploy your custom ERC-20 token
               </CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-sm px-3 py-1">
+            <Badge variant="outline" className="text-xs sm:text-sm px-2 sm:px-3 py-1">
               Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
             </Badge>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="space-y-6 sm:space-y-8 px-4 sm:px-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* Token Basic Info */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Coins className="h-5 w-5 text-purple-600" />
-                <h3 className="text-lg font-semibold">Token Information</h3>
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Coins className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                <h3 className="text-base sm:text-lg font-semibold">Token Information</h3>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
                     Token Name *
                   </Label>
                   <Input
@@ -164,10 +184,10 @@ export function TokenFactoryForm() {
                     placeholder="e.g., My Awesome Token"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
-                    className={`h-12 ${errors.name ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
+                    className={`h-10 sm:h-12 text-sm sm:text-base ${errors.name ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
                   />
                   {errors.name && (
-                    <p className="text-sm text-red-500 flex items-center gap-1">
+                    <p className="text-xs sm:text-sm text-red-500 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       {errors.name}
                     </p>
@@ -177,7 +197,7 @@ export function TokenFactoryForm() {
 
                 <div className="space-y-2">
                   <Label htmlFor="symbol" className="text-sm font-medium flex items-center gap-2">
-                    <Hash className="h-4 w-4" />
+                    <Hash className="h-3 w-3 sm:h-4 sm:w-4" />
                     Token Symbol *
                   </Label>
                   <Input
@@ -185,11 +205,11 @@ export function TokenFactoryForm() {
                     placeholder="e.g., MAT"
                     value={formData.symbol}
                     onChange={(e) => handleInputChange("symbol", e.target.value.toUpperCase())}
-                    className={`h-12 ${errors.symbol ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
+                    className={`h-10 sm:h-12 text-sm sm:text-base ${errors.symbol ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
                     maxLength={10}
                   />
                   {errors.symbol && (
-                    <p className="text-sm text-red-500 flex items-center gap-1">
+                    <p className="text-xs sm:text-sm text-red-500 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       {errors.symbol}
                     </p>
@@ -200,7 +220,7 @@ export function TokenFactoryForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="totalSupply" className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
+                  <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
                   Total Supply *
                 </Label>
                 <Input
@@ -209,10 +229,10 @@ export function TokenFactoryForm() {
                   placeholder="e.g., 1000000"
                   value={formData.totalSupply}
                   onChange={(e) => handleInputChange("totalSupply", e.target.value)}
-                  className={`h-12 ${errors.totalSupply ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
+                  className={`h-10 sm:h-12 text-sm sm:text-base ${errors.totalSupply ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
                 />
                 {errors.totalSupply && (
-                  <p className="text-sm text-red-500 flex items-center gap-1">
+                  <p className="text-xs sm:text-sm text-red-500 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     {errors.totalSupply}
                   </p>
@@ -224,7 +244,7 @@ export function TokenFactoryForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-sm font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
                   Description (Optional)
                 </Label>
                 <Textarea
@@ -232,18 +252,18 @@ export function TokenFactoryForm() {
                   placeholder="Describe your token's purpose, utility, and vision..."
                   value={formData.description}
                   onChange={(e) => handleInputChange("description", e.target.value)}
-                  rows={4}
-                  className="resize-none focus:border-purple-500"
+                  rows={3}
+                  className="resize-none focus:border-purple-500 text-sm sm:text-base"
                 />
                 <p className="text-xs text-gray-500">Help others understand what your token is for</p>
               </div>
             </div>
 
             {/* Payment Section */}
-            <div className="border-t pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <DollarSign className="h-5 w-5 text-green-600" />
-                <h3 className="text-lg font-semibold">Deployment Cost</h3>
+            <div className="border-t pt-4 sm:pt-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <h3 className="text-base sm:text-lg font-semibold">Deployment Cost</h3>
               </div>
 
               <div className="space-y-2">
@@ -258,18 +278,18 @@ export function TokenFactoryForm() {
                   placeholder="0.01"
                   value={formData.paymentAmount}
                   onChange={(e) => handleInputChange("paymentAmount", e.target.value)}
-                  className={`h-12 ${errors.paymentAmount ? "border-red-500 focus:border-red-500" : "focus:border-green-500"}`}
+                  className={`h-10 sm:h-12 text-sm sm:text-base ${errors.paymentAmount ? "border-red-500 focus:border-red-500" : "focus:border-green-500"}`}
                 />
                 {errors.paymentAmount && (
-                  <p className="text-sm text-red-500 flex items-center gap-1">
+                  <p className="text-xs sm:text-sm text-red-500 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     {errors.paymentAmount}
                   </p>
                 )}
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                  <p className="text-sm text-green-800">
-                    <strong>Minimum Required: 0.01 VRCN</strong>
-                    <br />• Smart contract deployment
+                  <p className="text-xs sm:text-sm text-green-800">
+                    <strong>Minimum Required: 0.01 {getCurrentNetworkConfig().currency.symbol}</strong>
+                    <br />• Smart contract deployment {isTestnet() ? "(Testnet)" : "(Mainnet)"}
                     <br />• Token creation and minting
                     <br />• Gas fees covered
                     <br />• Instant token transfer to your wallet
@@ -282,7 +302,7 @@ export function TokenFactoryForm() {
             {error && (
               <Alert variant="destructive" className="border-red-200">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="text-sm sm:text-base">{error}</AlertDescription>
               </Alert>
             )}
 
@@ -291,25 +311,32 @@ export function TokenFactoryForm() {
                 <CheckCircle2 className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-blue-800">
                   <div className="space-y-2">
-                    <p className="font-medium">Transaction submitted successfully! 🚀</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">TX Hash:</span>
-                      <code className="text-xs bg-blue-100 px-2 py-1 rounded font-mono">
-                        {txHash.slice(0, 10)}...{txHash.slice(-8)}
-                      </code>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          const url = `https://dxb.vrcchain.com/tx/${txHash}`
-                          window.open(url, "_blank", "noopener,noreferrer")
-                        }}
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </Button>
+                    <p className="font-medium text-sm sm:text-base">Transaction submitted successfully! 🚀</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="text-xs sm:text-sm">TX Hash:</span>
+                      <div className="flex items-center gap-2">
+                        <code className="text-xs bg-blue-100 px-2 py-1 rounded font-mono break-all sm:break-normal">
+                          <span className="sm:hidden">
+                            {txHash.slice(0, 8)}...{txHash.slice(-6)}
+                          </span>
+                          <span className="hidden sm:inline">
+                            {txHash.slice(0, 10)}...{txHash.slice(-8)}
+                          </span>
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 flex-shrink-0"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            const url = getExplorerUrl(`/tx/${txHash}`)
+                            window.open(url, "_blank", "noopener,noreferrer")
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </AlertDescription>
@@ -321,28 +348,35 @@ export function TokenFactoryForm() {
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-800">
                   <div className="space-y-3">
-                    <p className="font-bold text-lg">🎉 Token deployed successfully!</p>
+                    <p className="font-bold text-base sm:text-lg">🎉 Token deployed successfully!</p>
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">Contract Address:</span>
-                        <code className="text-xs bg-green-100 px-2 py-1 rounded font-mono">
-                          {deployedTokenAddress.slice(0, 10)}...{deployedTokenAddress.slice(-8)}
-                        </code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            const url = `https://dxb.vrcchain.com/address/${deployedTokenAddress}`
-                            window.open(url, "_blank", "noopener,noreferrer")
-                          }}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span className="text-xs sm:text-sm font-medium">Contract Address:</span>
+                        <div className="flex items-center gap-2">
+                          <code className="text-xs bg-green-100 px-2 py-1 rounded font-mono break-all sm:break-normal">
+                            <span className="sm:hidden">
+                              {deployedTokenAddress.slice(0, 8)}...{deployedTokenAddress.slice(-6)}
+                            </span>
+                            <span className="hidden sm:inline">
+                              {deployedTokenAddress.slice(0, 10)}...{deployedTokenAddress.slice(-8)}
+                            </span>
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 flex-shrink-0"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              const url = getExplorerUrl(`/address/${deployedTokenAddress}`)
+                              window.open(url, "_blank", "noopener,noreferrer")
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                      <p className="text-sm">
+                      <p className="text-xs sm:text-sm">
                         Your {formData.name} ({formData.symbol}) tokens have been sent to your wallet!
                       </p>
                     </div>
@@ -354,18 +388,28 @@ export function TokenFactoryForm() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg"
-              disabled={isLoading}
+              className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg"
+              disabled={
+                isLoading || (chain?.id && isMainnetChain(chain.id) && !isMainnetContractReadyByChainId(chain.id))
+              }
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                  Deploying Your Token...
+                  <Loader2 className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                  <span className="hidden sm:inline">Deploying Your Token...</span>
+                  <span className="sm:hidden">Deploying...</span>
+                </>
+              ) : chain?.id && isMainnetChain(chain.id) && !isMainnetContractReadyByChainId(chain.id) ? (
+                <>
+                  <Construction className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="hidden sm:inline">Mainnet Contract Not Ready</span>
+                  <span className="sm:hidden">Contract Not Ready</span>
                 </>
               ) : (
                 <>
-                  <Rocket className="mr-3 h-5 w-5" />
-                  Deploy Token ({formData.paymentAmount} VRCN)
+                  <Rocket className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="hidden sm:inline">Deploy Token ({formData.paymentAmount} VRCN)</span>
+                  <span className="sm:hidden">Deploy ({formData.paymentAmount} VRCN)</span>
                 </>
               )}
             </Button>
@@ -376,25 +420,25 @@ export function TokenFactoryForm() {
       {/* Token Preview */}
       {(formData.name || formData.symbol || formData.totalSupply) && (
         <Card className="border-0 shadow-xl bg-gradient-to-r from-purple-50 to-pink-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-purple-600" />
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
               Token Preview
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <p className="text-sm text-gray-500">Name</p>
-                <p className="font-semibold text-lg">{formData.name || "Token Name"}</p>
+          <CardContent className="px-4 sm:px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="text-center p-3 sm:p-4 bg-white rounded-lg shadow-sm">
+                <p className="text-xs sm:text-sm text-gray-500">Name</p>
+                <p className="font-semibold text-sm sm:text-lg break-words">{formData.name || "Token Name"}</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <p className="text-sm text-gray-500">Symbol</p>
-                <p className="font-semibold text-lg">{formData.symbol || "SYMBOL"}</p>
+              <div className="text-center p-3 sm:p-4 bg-white rounded-lg shadow-sm">
+                <p className="text-xs sm:text-sm text-gray-500">Symbol</p>
+                <p className="font-semibold text-sm sm:text-lg">{formData.symbol || "SYMBOL"}</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <p className="text-sm text-gray-500">Total Supply</p>
-                <p className="font-semibold text-lg">
+              <div className="text-center p-3 sm:p-4 bg-white rounded-lg shadow-sm">
+                <p className="text-xs sm:text-sm text-gray-500">Total Supply</p>
+                <p className="font-semibold text-sm sm:text-lg">
                   {formData.totalSupply ? Number(formData.totalSupply).toLocaleString() : "0"}
                 </p>
               </div>

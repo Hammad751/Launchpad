@@ -5,10 +5,10 @@ import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagm
 import { parseEther } from "viem"
 import type { TokenDeploymentData } from "@/types/token"
 import { TOKEN_FACTORY_ABI } from "@/lib/contract-abi"
-import { TOKEN_FACTORY_ADDRESS } from "@/lib/contract-address"
+import { getContractAddressByChainId, isSupportedChainId } from "@/lib/network-config"
 
 export function useTokenFactory() {
-  const { address } = useAccount()
+  const { address, chain } = useAccount()
   const [error, setError] = useState<string | null>(null)
   const [deployedTokenAddress, setDeployedTokenAddress] = useState<string | null>(null)
 
@@ -23,9 +23,15 @@ export function useTokenFactory() {
       let extractedTokenAddress: string | null = null
 
       try {
+        const contractAddress = chain?.id ? getContractAddressByChainId(chain.id) : null
+        if (!contractAddress) {
+          console.error("No contract address found for current chain")
+          return
+        }
+
         // Look for TokenCreated event in the logs
         const tokenCreatedLog = receipt.logs.find((log) => {
-          return log.address.toLowerCase() === TOKEN_FACTORY_ADDRESS.toLowerCase() && log.topics.length >= 3
+          return log.address.toLowerCase() === contractAddress.toLowerCase() && log.topics.length >= 3
         })
 
         if (tokenCreatedLog && tokenCreatedLog.topics[1]) {
@@ -56,6 +62,25 @@ export function useTokenFactory() {
       setError(null)
       setDeployedTokenAddress(null)
 
+      // Check if wallet is connected and chain is supported
+      if (!chain?.id) {
+        throw new Error("Please connect your wallet")
+      }
+
+      if (!isSupportedChainId(chain.id)) {
+        throw new Error(`Unsupported network. Please switch to a supported network.`)
+      }
+
+      // Get contract address for current chain
+      const contractAddress = getContractAddressByChainId(chain.id)
+      if (!contractAddress) {
+        throw new Error("Contract not deployed on this network")
+      }
+
+      if (contractAddress === "0x0000000000000000000000000000000000000000") {
+        throw new Error("Contract address not configured for this network")
+      }
+
       // Validate minimum payment amount (0.01 VRCN)
       const paymentAmount = Number(data.paymentAmount)
       if (paymentAmount < 0.01) {
@@ -63,12 +88,14 @@ export function useTokenFactory() {
       }
 
       console.log("Deploying token with data:", data)
+      console.log("Using contract address:", contractAddress)
+      console.log("On chain ID:", chain.id)
 
       const totalSupplyWei = parseEther(data.totalSupply)
       const paymentWei = parseEther(data.paymentAmount)
 
       writeContract({
-        address: TOKEN_FACTORY_ADDRESS,
+        address: contractAddress as `0x${string}`,
         abi: TOKEN_FACTORY_ABI,
         functionName: "createToken",
         args: [data.name, data.symbol, totalSupplyWei],

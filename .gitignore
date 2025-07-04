@@ -16,8 +16,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
-.env*
+# env files - commented out since we're committing .env with public blockchain info
+# .env*
 
 # vercel
 .vercel
