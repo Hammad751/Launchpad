@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Coins, Zap, Shield, Sparkles, History, Plus } from "lucide-react"
 import { useAccount } from "wagmi"
 import { NetworkIndicator } from "@/components/network-indicator"
+import Image from "next/image"
 
 export default function HomePage() {
   const { isConnected } = useAccount()
@@ -29,11 +30,12 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-12 pb-4 sm:pb-8">
           <div className="text-center mb-8 sm:mb-12">
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <div className="p-2 sm:p-3 bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl">
-                <Coins className="h-6 w-6 sm:h-10 sm:w-10 text-white" />
+              <div className="p-1 sm:p-3 bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl">
+                {/* <Coins className="h-6 w-6 sm:h-10 sm:w-10 text-white" /> */}
+                <Image src="/logo.svg" alt="VRCN Logo" width={45} height={45} />
               </div>
               <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white">
-                VRCN
+                VRCN {" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-400">
                   Launchpad
                 </span>

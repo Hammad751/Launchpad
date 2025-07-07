@@ -4,6 +4,15 @@ import ClientLayout from "./ClientLayout"
 
 const inter = Inter({ subsets: ["latin"] })
 
+export const metadata = {
+  title: "VRCN Launchpad",
+  description: "Create and deploy your own ERC-20 tokens on VRCN Chain",
+  generator: 'vrcn launchpad',
+  icons: {
+    icon: "/logo.svg",
+  },
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -20,7 +29,3 @@ export default function RootLayout({
 
 
 import './globals.css'
-
-export const metadata = {
-      generator: 'v0.dev'
-    };
