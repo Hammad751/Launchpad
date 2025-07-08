@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "VRCN Launchpad",
-  description: "Create and deploy your own ERC-20 tokens on VRCN Chain",
+  description: "Create and deploy your own tokens on VRCN Chain",
   generator: 'v0.dev',
   icons: {
     icon: [

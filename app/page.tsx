@@ -42,9 +42,11 @@ export default function HomePage() {
               </h1>
             </div>
             <p className="text-base sm:text-xl md:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed px-4">
-              The premier token creation platform on VRCN Chain.
+              The Ultimate Token Creation Platform on VRCN Chain
               <br className="hidden sm:block" />
-              Launch your custom ERC-20 tokens in minutes with no coding required!
+              Effortlessly launch your own custom tokens in just minutes 
+               <br className="hidden sm:block" />
+              No coding, No hassle!
             </p>
             <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-4 sm:mt-6 px-4">
               <Badge className="bg-white/20 text-white border-white/30 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm">
