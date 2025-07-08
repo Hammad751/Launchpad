@@ -32,7 +32,7 @@ export const NETWORK_CONFIGS: Record<NetworkType, NetworkConfig> = {
     chainName: "VRCN Chain",
     rpcUrl: "https://rpc-mainnet-4.vrcchain.com",
     explorerUrl: "https://vrcchain.com",
-    contractAddress: "0x0000000000000000000000000000000000000000", // ✅ CHANGE ONLY THIS for mainnet!
+    contractAddress: "0x076aDFcfd0AF2a1149AA7915e848e764261bf7e7", // ✅ CHANGE ONLY THIS for mainnet!
     currency: {
       name: "VRCN",
       symbol: "VRCN",
