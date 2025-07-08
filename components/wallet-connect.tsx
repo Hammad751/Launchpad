@@ -75,7 +75,7 @@ export function WalletConnect() {
             <p className="text-xs sm:text-sm text-gray-600">Choose a wallet to connect to the VRCN network</p>
           </div>
           <div className="space-y-2">
-            {connectors.map((connector) => (
+            {[...new Map(connectors.map(conn => [conn.name, conn])).values()].map((connector) => (
               <Button
                 key={connector.uid}
                 onClick={() => connect({ connector })}

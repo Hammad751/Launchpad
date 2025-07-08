@@ -1,5 +1,5 @@
 import { createConfig, http } from "wagmi"
-import { injected } from "wagmi/connectors"
+import { injected, walletConnect } from "wagmi/connectors"
 import { defineChain } from "viem"
 import { NETWORK_CONFIGS } from "./network-config"
 
