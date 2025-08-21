@@ -37,7 +37,7 @@ export default function ClientLayout({
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[navy] flex items-center justify-center">
         <div className="text-white text-lg">Loading...</div>
       </div>
     )

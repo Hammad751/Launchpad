@@ -5,41 +5,38 @@ import { TokenFactoryForm } from "@/components/token-factory-form"
 import { TokenHistory } from "@/components/token-history"
 import { WalletConnect } from "@/components/wallet-connect"
 import { ComprehensiveNetworkManager } from "@/components/comprehensive-network-manager"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Coins, Zap, Shield, Sparkles, History, Plus } from "lucide-react"
+import { History, Plus } from "lucide-react"
 import { useAccount } from "wagmi"
 import { NetworkIndicator } from "@/components/network-indicator"
 import Image from "next/image"
+import Footer from "@/components/ui/footer"
 
 export default function HomePage() {
   const { isConnected } = useAccount()
   const [activeTab, setActiveTab] = useState<"create" | "history">("create")
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+   <>
+   <div className="min-h-screen bg-[navy]">
       {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-20 -right-20 sm:-top-40 sm:-right-40 w-40 h-40 sm:w-80 sm:h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute -bottom-20 -left-20 sm:-bottom-40 sm:-left-40 w-40 h-40 sm:w-80 sm:h-80 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-20 left-20 sm:top-40 sm:left-40 w-40 h-40 sm:w-80 sm:h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-      </div>
 
       <div className="relative z-10">
         {/* Header */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-12 pb-4 sm:pb-8">
           <div className="text-center mb-8 sm:mb-12">
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+            <div className="flex gap-2 sm:gap-3 mb-4 sm:mb-6">
               <div className="p-1 sm:p-3 bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl">
-                {/* <Coins className="h-6 w-6 sm:h-10 sm:w-10 text-white" /> */}
                 <Image src="/logo.svg" alt="VRCN Logo" width={45} height={45} />
               </div>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white">
-                VRCN {" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-400">
+              <div className="flex flex-col">
+                <h1 className="text-2xl sm:text-xl md:text-3xl font-bold text-white">
+                  VRCN
+                </h1>
+                <h2 className="text-xl sm:text-lg md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-pink-200 mt-1">
                   Launchpad
-                </span>
-              </h1>
+                </h2>
+              </div>
             </div>
             <p className="text-base sm:text-xl md:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed px-4">
               The Ultimate Token Creation Platform on VRCN Chain
@@ -48,20 +45,6 @@ export default function HomePage() {
                <br className="hidden sm:block" />
               No coding, No hassle!
             </p>
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-4 sm:mt-6 px-4">
-              <Badge className="bg-white/20 text-white border-white/30 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm">
-                <Zap className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                Instant Deploy
-              </Badge>
-              <Badge className="bg-white/20 text-white border-white/30 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm">
-                <Shield className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                Secure & Audited
-              </Badge>
-              <Badge className="bg-white/20 text-white border-white/30 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm">
-                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                Custom Features
-              </Badge>
-            </div>
           </div>
 
           {/* Wallet Connection */}
@@ -132,5 +115,7 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+      <Footer />
+  </>   
   )
 }
