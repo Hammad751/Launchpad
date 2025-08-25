@@ -5,6 +5,7 @@ import { FaTelegram } from "react-icons/fa";
 import { FaInstagram } from "react-icons/fa";
 import { IoLogoWhatsapp } from "react-icons/io";
 import { BsTwitterX } from "react-icons/bs";
+import { BsDiscord } from "react-icons/bs";
 const Footer = () => {
     return (
         <>
@@ -30,6 +31,7 @@ const Footer = () => {
 
                         <div className='flex gap-3 mt-3'>
                             <a href='https://t.me/+xG1JjT-3EPIzZjNk'><FaTelegram size={30} /></a>
+                            <a href='https://discord.gg/vgdGwVud'><BsDiscord size={30} /></a>
                         </div>
 
                     </div>
