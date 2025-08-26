@@ -82,7 +82,8 @@ export function WalletConnect() {
                 disabled={isPending}
                 className="w-full h-10 sm:h-12 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               >
-                {isPending ? "Connecting..." : `Connect ${connector.name}`}
+                {/* {isPending ? "Connecting..." : `Connect ${connector.name}`} */}
+                {isPending ? "Connecting..." : "Connect Wallet" }
               </Button>
             ))}
           </div>
